@@ -1,0 +1,66 @@
+# Program name
+PRG=HelloWorld
+# System target
+SYSTEM=apple2enh
+# The test below allows to keep working on this in different environments\computers
+!if "$(COMPUTERNAME)" == "M"  
+# That's the location where I have programs such as AppleWin, or a DOS blank disk image
+MyAppleFolder="C:\Users\Olivier\OneDrive\Apple"
+!else
+# Work environment...
+MyAppleFolder="D:\Apple"
+# This was running on GSPort @ work
+GSPORT=$(MyAppleFolder)\sport_0.31\gsport.exe
+!endif
+
+# Misc. vars
+# https://github.com/AppleWin/AppleWin
+APPLEWIN=$(MyAppleFolder)\AppleWin\Applewin.exe
+# http://www.brutaldeluxe.fr/products/crossdevtools/merlin/
+MERLIN32ROOT=$(MyAppleFolder)\Merlin32_v1.0
+MERLIN32LIBS=$(MERLIN32ROOT)\Library
+MERLIN32WIN=$(MERLIN32ROOT)\Windows
+MERLIN32EXE=$(MERLIN32WIN)\merlin32.exe
+# http://applecommander.sourceforge.net/
+APPLECOMMANDER=$(MyAppleFolder)\AppleCommander-1.3.5-ac.jar
+ACJAR=java.exe -jar $(APPLECOMMANDER)
+
+
+$(PRG): $(PRG).s
+	@Echo ***************************************************************
+	@Echo *** On compile l'exécutable	/ Compile program						
+	@Echo ***************************************************************
+	$(MERLIN32EXE) -V $(MERLIN32LIBS) $(PRG).s
+
+GetFloppyAndCopyDSK:
+	@Echo ***************************************************************
+	@Echo *** On copie la disquette vierge à partir du répertoire parent
+	@Echo *** et on copie dessus les fichiers executables et autres 
+	@Echo *** Copying blank disk image and copying the program on it
+	@Echo ***************************************************************
+	copy /Y $(MyAppleFolder)\prodos.dsk .\$(PRG).dsk
+	$(ACJAR) -p $(PRG).dsk $(PRG) bin 2048 < $(PRG)
+
+LaunchAppleWin:
+	@Echo ***************************************************************
+	@Echo *** On lance le tout dans AppleWin / Launch AppleWin 
+	@Echo ***************************************************************
+	$(APPLEWIN) -d1 $(PRG).dsk
+	
+LaunchGSPort:
+	@Echo ***************************************************************
+	@Echo *** On lance le tout dans GSPORT / Launch GSPort (not used here)
+	@Echo ***************************************************************
+#$(GSPORT) -d1 $(PRG).dsk
+	$(GSPORT)
+
+clean:
+	@Echo ***************************************************************
+	@Echo *** On efface les fichiers programme, objet et backup
+	@Echo *** Clean files
+	@Echo ***************************************************************
+	del _FileInformation.txt $(PRG)_Output.txt $(PRG).dsk $(PRG)
+
+all: clean $(PRG) GetFloppyAndCopyDSK LaunchAppleWin
+
+
